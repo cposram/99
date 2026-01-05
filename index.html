@@ -2,64 +2,101 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>九九乘法：氣球神射手 V2</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>九九乘法：50題極速挑戰賽</title>
     <style>
         body {
             margin: 0;
             overflow: hidden;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(to bottom, #87CEEB, #E0F7FA);
+            background: linear-gradient(to bottom, #1a2a6c, #b21f1f, #fdbb2d); /* 更有戰鬥感的背景 */
             user-select: none;
-            cursor: crosshair;
-            touch-action: none; /* 防止手機觸控縮放 */
+            -webkit-user-select: none;
+            touch-action: none;
         }
         
-        #game-ui {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            color: #333;
-            font-size: 24px;
-            font-weight: bold;
-            text-shadow: 2px 2px 0px rgba(255,255,255,0.5);
-            pointer-events: none;
-            z-index: 10;
-        }
-
-        #question-display {
-            position: absolute;
-            top: 12%;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: clamp(40px, 8vw, 70px); /* 響應式字體 */
-            font-weight: 900;
-            color: #2c3e50;
-            background: rgba(255, 255, 255, 0.9);
-            padding: 10px 40px;
-            border-radius: 50px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            display: none;
-            pointer-events: none;
-            z-index: 10;
-            white-space: nowrap;
-        }
-
-        #timer-bar-container {
+        /* 儀表板區域 */
+        #dashboard {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
-            height: 12px;
-            background: #ddd;
-            z-index: 10;
+            padding: 10px 20px;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+            font-weight: bold;
+            z-index: 20;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
 
-        #timer-bar {
-            height: 100%;
-            background: #FF6B6B;
+        .hud-item {
+            font-size: 24px;
+        }
+
+        /* 中央大進度 */
+        #progress-container {
+            position: absolute;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            max-width: 400px;
+            text-align: center;
+            z-index: 15;
+            pointer-events: none;
+        }
+
+        #progress-text {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 20px;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        #progress-bar-bg {
             width: 100%;
+            height: 15px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            overflow: hidden;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+
+        #progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: #00ff00;
             transition: width 0.1s linear;
+            box-shadow: 0 0 10px #00ff00;
+        }
+
+        #question-display {
+            position: absolute;
+            top: 15%; /* 題目拿高一點，不要擋視線 */
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: clamp(50px, 12vw, 90px);
+            font-weight: 900;
+            color: #fff;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            display: none;
+            pointer-events: none;
+            z-index: 20;
+            white-space: nowrap;
+        }
+
+        /* 倒數計時條 (緊迫感) */
+        #timer-line {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 8px;
+            background: #ff00de;
+            width: 100%;
+            z-index: 20;
         }
 
         .overlay {
@@ -68,7 +105,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.85);
+            background: rgba(0, 0, 0, 0.92);
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -80,205 +117,220 @@
             text-align: center;
         }
 
-        .hidden {
-            display: none !important;
-        }
+        .hidden { display: none !important; }
 
         h1 {
-            font-size: clamp(30px, 6vw, 50px);
-            margin-bottom: 20px;
+            font-size: clamp(30px, 8vw, 50px);
+            margin-bottom: 10px;
             color: #FFD93D;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .mission-badge {
+            background: #ff4757;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            display: inline-block;
         }
 
         button {
-            padding: 15px 40px;
+            padding: 20px 60px;
             font-size: 24px;
-            background-color: #4CAF50;
+            background: linear-gradient(to bottom, #2ecc71, #27ae60);
             color: white;
             border: none;
             border-radius: 50px;
             cursor: pointer;
+            box-shadow: 0 5px 15px rgba(46, 204, 113, 0.4);
+            font-weight: bold;
+            margin-top: 30px;
             transition: transform 0.1s;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            font-weight: bold;
-            margin-top: 20px;
+        }
+        
+        button:active { transform: scale(0.95); }
+
+        /* 賽道線 (極淡) */
+        .lane-guide {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            border-right: 1px dashed rgba(255,255,255,0.1);
+            pointer-events: none;
         }
 
-        button:active {
-            transform: scale(0.95);
-        }
-
-        #report-card {
-            background: white;
-            color: #333;
+        .result-box {
+            background: rgba(255,255,255,0.1);
             padding: 20px;
-            border-radius: 20px;
-            max-width: 600px;
+            border-radius: 15px;
             width: 90%;
-            text-align: center;
-            margin-bottom: 20px;
+            max-width: 500px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
         }
 
-        .stat-row {
-            display: flex;
-            justify-content: space-around;
-            margin-bottom: 20px;
-            font-size: 20px;
-            font-weight: bold;
-        }
-
-        .error-list {
-            text-align: left;
-            background: #f9f9f9;
-            padding: 15px;
-            border-radius: 10px;
-            max-height: 25vh;
-            overflow-y: auto;
-        }
-        
-        .error-item {
-            color: #e74c3c;
-            font-weight: bold;
-            border-bottom: 1px solid #eee;
-            padding: 8px 0;
-            font-size: 18px;
-        }
-
+        /* 錯誤震動 */
         @keyframes shake {
-            0% { transform: translate(1px, 1px) rotate(0deg); }
-            10% { transform: translate(-1px, -2px) rotate(-1deg); }
-            20% { transform: translate(-3px, 0px) rotate(1deg); }
-            30% { transform: translate(3px, 2px) rotate(0deg); }
-            40% { transform: translate(1px, -1px) rotate(1deg); }
-            50% { transform: translate(-1px, 2px) rotate(-1deg); }
-            60% { transform: translate(-3px, 1px) rotate(0deg); }
-            70% { transform: translate(3px, 1px) rotate(-1deg); }
-            80% { transform: translate(-1px, -1px) rotate(1deg); }
-            90% { transform: translate(1px, 2px) rotate(0deg); }
-            100% { transform: translate(1px, -2px) rotate(-1deg); }
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-10px); }
+            40% { transform: translateX(10px); }
+            60% { transform: translateX(-10px); }
+            80% { transform: translateX(10px); }
         }
-        
-        .shake {
-            animation: shake 0.5s;
-            animation-iteration-count: 1;
+        .shake { animation: shake 0.3s cubic-bezier(.36,.07,.19,.97) both; }
+
+        /* 答對閃光 */
+        @keyframes flash {
+            0% { background-color: rgba(255,255,255,0.5); }
+            100% { background-color: transparent; }
         }
+        .flash { animation: flash 0.2s; }
+
     </style>
 </head>
 <body>
 
-    <div id="timer-bar-container"><div id="timer-bar"></div></div>
+    <div id="lanes-container"></div>
+    <div id="timer-line"></div>
     <canvas id="gameCanvas"></canvas>
 
-    <div id="game-ui">
-        時間: <span id="time-display">120</span>s <br>
-        得分: <span id="score-display">0</span>
+    <div id="dashboard">
+        <div class="hud-item">⏱️ <span id="time-display">150.0</span>s</div>
+        <div class="hud-item" style="color:#ff6b6b">❌ <span id="mistake-display">0</span></div>
     </div>
 
-    <div id="question-display">? x ? = ?</div>
+    <div id="progress-container">
+        <div id="progress-text">目標進度: <span id="score-display" style="font-size:1.2em; color:#00ff00">0</span> / 50</div>
+        <div id="progress-bar-bg"><div id="progress-bar-fill"></div></div>
+    </div>
+
+    <div id="question-display">READY</div>
 
     <div id="start-screen" class="overlay">
-        <h1>🎈 九九乘法神射手 🎈</h1>
-        <p style="font-size: 18px; margin-bottom: 30px; opacity: 0.9; line-height: 1.6;">
-            新版規則：氣球不再重疊！<br>
-            總時間 120 秒，每題 7 秒。<br>
-            看準包含正確答案的氣球射擊！
+        <h1>🚀 極速乘法挑戰</h1>
+        <div class="mission-badge">任務目標：150秒內答對50題</div>
+        <p style="font-size: 18px; line-height: 1.6; opacity: 0.9;">
+            這是模擬比賽模式。<br>
+            答對立即換題，分秒必爭。<br>
+            <span style="color:#ff6b6b">注意：答錯不扣分，但會卡住並浪費時間！</span>
         </p>
-        <button onclick="game.start()">開始遊戲</button>
+        <button onclick="game.start()">開始挑戰</button>
     </div>
 
     <div id="end-screen" class="overlay hidden">
-        <h1>遊戲結束</h1>
-        <div id="report-card">
-            <div class="stat-row">
-                <div style="color: green;">✅ 答對: <span id="final-score">0</span></div>
-                <div style="color: red;">❌ 答錯: <span id="final-mistakes">0</span></div>
-            </div>
-            <div style="margin-top: 10px; font-weight: bold; text-align: left;">⚠️ 需加強的組合：</div>
-            <div id="error-list-container" class="error-list">
-                </div>
+        <h1 id="end-title">挑戰結束</h1>
+        <div class="result-box">
+            <h2 id="end-reason" style="margin-top:0; color:#FFD93D;">時間到</h2>
+            <p style="font-size:20px;">
+                最終成績：<span id="final-score" style="font-size:40px; font-weight:bold;">0</span> / 50
+            </p>
+            <p style="font-size:18px;">
+                耗時：<span id="final-time">0</span> 秒
+            </p>
+            <p style="font-size:18px; color:#ff6b6b;">
+                錯誤次數：<span id="final-mistakes">0</span>
+            </p>
+            <div id="feedback-msg" style="margin-top:15px; font-style:italic; color:#aaa;"></div>
         </div>
-        <button onclick="game.start()">再玩一次</button>
+        <button onclick="game.start()">再次挑戰</button>
     </div>
 
 <script>
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     
-    // RWD Canvas
+    // --- 比賽參數設定 ---
+    const TARGET_SCORE = 50;  // 目標題數
+    const TIME_LIMIT = 150;   // 總時間 (秒)
+    const LANES_COUNT = 4;    // 賽道數
+    const BALLOON_BASE_SPEED_MULTIPLIER = 1.2; // 氣球基礎速度加成 (1.0為原速)
+
+    // RWD
     function resize() {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
+        drawLaneGuides();
     }
+    
+    function drawLaneGuides() {
+        const container = document.getElementById('lanes-container');
+        container.innerHTML = '';
+        const w = window.innerWidth / LANES_COUNT;
+        for(let i=1; i<LANES_COUNT; i++) {
+            const line = document.createElement('div');
+            line.className = 'lane-guide';
+            line.style.left = (w * i) + 'px';
+            container.appendChild(line);
+        }
+    }
+    
     window.addEventListener('resize', resize);
     resize();
 
-    // 遊戲參數
-    const GAME_DURATION = 120; 
-    const QUESTION_TIME = 7; 
-
     class Balloon {
-        constructor(number, isCorrect, xPos, maxRadius) {
-            this.radius = maxRadius; // 固定最大半徑，避免重疊
-            this.x = xPos;
-            this.y = canvas.height + this.radius + Math.random() * 150; // 錯開出現時間
-            this.speed = canvas.height / (QUESTION_TIME * 60) * (1 + Math.random() * 0.5); // 根據高度動態調整速度
-            if(this.speed < 1.5) this.speed = 1.5; // 最低速度
+        constructor(number, isCorrect, laneIndex) {
+            const laneWidth = canvas.width / LANES_COUNT;
+            const maxRadius = Math.min(laneWidth * 0.35, 65); 
+            this.radius = maxRadius;
+
+            this.x = (laneIndex * laneWidth) + (laneWidth / 2);
+            // 從畫面底部下方隨機位置生成，製造高低差
+            this.y = canvas.height + this.radius + (Math.random() * 200);
+            
+            // 速度計算：確保氣球飛得夠快，逼迫玩家反應
+            // 基礎速度讓它約 4-5 秒飛過全螢幕
+            let baseSpeed = (canvas.height) / 240; 
+            this.speed = baseSpeed * (1 + Math.random() * 0.5) * BALLOON_BASE_SPEED_MULTIPLIER;
+            if (this.speed < 2) this.speed = 2;
 
             this.number = number;
             this.isCorrect = isCorrect;
-            this.color = `hsl(${Math.random() * 360}, 75%, 65%)`;
+            // 使用鮮豔但稍微深一點的顏色，適合深色背景
+            this.color = `hsl(${Math.random() * 360}, 85%, 55%)`; 
             this.popped = false;
-            
-            // 微微的左右擺動參數
-            this.wobbleSpeed = Math.random() * 0.05 + 0.02;
-            this.wobbleDistance = Math.random() * 20;
-            this.originalX = xPos;
-            this.timeOffset = Math.random() * 100;
         }
 
         update() {
             this.y -= this.speed;
-            // 輕微左右擺動，增加動感但不影響點擊
-            this.x = this.originalX + Math.sin(this.y * 0.01 + this.timeOffset) * 10;
         }
 
         draw(ctx) {
             if (this.popped) return;
             
-            // 畫氣球本體
+            // 氣球本體
             ctx.beginPath();
             ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
             ctx.fillStyle = this.color;
             ctx.fill();
             
-            // 光澤
+            // 立體光澤
             ctx.beginPath();
-            ctx.arc(this.x - this.radius * 0.3, this.y - this.radius * 0.3, this.radius * 0.2, 0, Math.PI * 2);
-            ctx.fillStyle = "rgba(255,255,255,0.3)";
+            ctx.arc(this.x - this.radius * 0.3, this.y - this.radius * 0.3, this.radius * 0.25, 0, Math.PI * 2);
+            ctx.fillStyle = "rgba(255,255,255,0.4)";
             ctx.fill();
 
             // 繩子
             ctx.beginPath();
             ctx.moveTo(this.x, this.y + this.radius);
             ctx.lineTo(this.x, this.y + this.radius + 40);
-            ctx.strokeStyle = "#666";
+            ctx.strokeStyle = "rgba(255,255,255,0.5)";
             ctx.lineWidth = 2;
             ctx.stroke();
 
             // 數字
-            ctx.fillStyle = "white";
-            // 字體大小隨氣球大小調整
-            ctx.font = `bold ${this.radius * 0.9}px Arial`; 
+            ctx.fillStyle = "#fff";
+            ctx.font = `bold ${this.radius * 0.9}px Arial`;
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
-            ctx.fillText(this.number, this.x, this.y);
-            
-            // 邊框 (讓氣球更清楚)
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-            ctx.strokeStyle = "rgba(0,0,0,0.1)";
-            ctx.lineWidth = 1;
-            ctx.stroke();
+            // 文字陰影讓它在亮色氣球上也明顯
+            ctx.shadowColor = "rgba(0,0,0,0.5)";
+            ctx.shadowBlur = 4;
+            ctx.fillText(this.number, this.x, this.y + 2);
+            ctx.shadowBlur = 0; // 重置
         }
     }
 
@@ -286,18 +338,16 @@
         constructor(x, y, color) {
             this.x = x;
             this.y = y;
-            this.radius = Math.random() * 6 + 2;
-            this.speedX = (Math.random() - 0.5) * 15;
-            this.speedY = (Math.random() - 0.5) * 15;
+            this.radius = Math.random() * 6 + 3;
+            this.vx = (Math.random() - 0.5) * 18;
+            this.vy = (Math.random() - 0.5) * 18;
             this.color = color;
-            this.life = 1.0; 
-            this.gravity = 0.5;
+            this.life = 1.0;
         }
         update() {
-            this.x += this.speedX;
-            this.y += this.speedY;
-            this.speedY += this.gravity; // 加入重力
-            this.life -= 0.04;
+            this.x += this.vx;
+            this.y += this.vy;
+            this.life -= 0.06; // 消失快一點
         }
         draw(ctx) {
             ctx.globalAlpha = Math.max(0, this.life);
@@ -311,261 +361,266 @@
 
     class Game {
         constructor() {
-            this.state = 'menu'; 
+            this.state = 'menu';
             this.score = 0;
             this.mistakes = 0;
-            this.totalTime = GAME_DURATION;
-            this.questionTime = QUESTION_TIME;
+            this.startTime = 0;
+            this.endTime = 0;
             
-            this.currentProblem = null; 
             this.balloons = [];
             this.particles = [];
-            this.errorLog = {}; 
+            this.currentProblem = null;
             
-            this.lastTime = 0;
-            this.questionTimer = 0;
-            
+            // DOM
             this.uiTime = document.getElementById('time-display');
             this.uiScore = document.getElementById('score-display');
+            this.uiMistake = document.getElementById('mistake-display');
             this.uiQuestion = document.getElementById('question-display');
-            this.timerBar = document.getElementById('timer-bar');
+            this.barFill = document.getElementById('progress-bar-fill');
+            this.timerLine = document.getElementById('timer-line');
+            
             this.startScreen = document.getElementById('start-screen');
             this.endScreen = document.getElementById('end-screen');
 
-            // 支援滑鼠與觸控
-            canvas.addEventListener('mousedown', (e) => this.handleClick(e.clientX, e.clientY));
-            canvas.addEventListener('touchstart', (e) => {
-                e.preventDefault(); // 防止滾動
-                this.handleClick(e.touches[0].clientX, e.touches[0].clientY);
-            }, {passive: false});
+            // Input
+            const inputHandler = (e) => this.handleInput(e);
+            canvas.addEventListener('mousedown', inputHandler);
+            canvas.addEventListener('touchstart', inputHandler, {passive: false});
         }
 
         start() {
             this.state = 'playing';
             this.score = 0;
             this.mistakes = 0;
-            this.totalTime = GAME_DURATION;
-            this.errorLog = {};
             this.balloons = [];
             this.particles = [];
+            this.startTime = Date.now();
             
             this.startScreen.classList.add('hidden');
             this.endScreen.classList.add('hidden');
             this.uiQuestion.style.display = 'block';
             
             this.nextQuestion();
-            requestAnimationFrame((t) => this.loop(t));
+            requestAnimationFrame(() => this.loop());
         }
 
         nextQuestion() {
-            this.questionTimer = QUESTION_TIME;
+            // 檢查是否達成目標
+            if (this.score >= TARGET_SCORE) {
+                this.finishGame(true);
+                return;
+            }
+
             const a = Math.floor(Math.random() * 9) + 1;
             const b = Math.floor(Math.random() * 9) + 1;
-            this.currentProblem = { a, b, val: a * b, str: `${a} x ${b}` };
+            this.currentProblem = { a, b, val: a * b };
             
             this.uiQuestion.textContent = `${a} x ${b} = ?`;
             
-            this.balloons = [];
-            
-            // --- 分道機制 (Lane System) ---
-            const totalLanes = 5; // 總共5顆氣球
-            const margin = 20; // 邊距
-            const laneWidth = (canvas.width - margin * 2) / totalLanes;
-            
-            // 決定氣球半徑 (保證不重疊，最大半徑限制 55)
-            const balloonRadius = Math.min(laneWidth / 2 - 5, 55); 
-
-            // 建立跑道索引並打亂 [0, 1, 2, 3, 4] -> [2, 0, 4, 1, 3]
-            let lanes = Array.from({length: totalLanes}, (_, i) => i);
+            // 賽道分配
+            let lanes = Array.from({length: LANES_COUNT}, (_, i) => i);
             lanes.sort(() => Math.random() - 0.5);
-
-            // 生成數字
-            let numbers = [];
-            // 正確答案
-            numbers.push({ val: this.currentProblem.val, isCorrect: true });
             
-            // 錯誤答案
-            for(let i=0; i < totalLanes - 1; i++) {
-                let fake;
-                let attempts = 0;
-                do {
-                    let offset = Math.floor(Math.random() * 18) - 9; 
-                    if (offset === 0) offset = 5; // 避免+0
-                    fake = Math.abs(this.currentProblem.val + offset);
-                    
-                    // 特殊陷阱：如果是個位數乘法，可能會出現個位數錯誤 (例如 24 出 21)
-                    if (Math.random() > 0.5) {
-                         fake = (Math.floor(Math.random() * 9) + 1) * (Math.floor(Math.random() * 9) + 1);
-                    }
-                    attempts++;
-                } while ((fake === this.currentProblem.val || numbers.some(n => n.val === fake)) && attempts < 10);
-                
-                // 如果嘗試太久都重複，就強制+1
-                if (fake === this.currentProblem.val) fake += 1;
-                
-                numbers.push({ val: fake, isCorrect: false });
-            }
+            this.balloons = [];
 
-            // 創建氣球物件，分配到打亂的跑道上
-            for (let i = 0; i < totalLanes; i++) {
-                // 計算該跑道的中心 X 座標
-                let laneIndex = lanes[i];
-                let centerX = margin + laneIndex * laneWidth + laneWidth / 2;
+            // 正解
+            this.balloons.push(new Balloon(this.currentProblem.val, true, lanes[0]));
+
+            // 錯誤選項
+            for(let i=1; i<LANES_COUNT; i++) {
+                let fake;
+                let safety = 0;
+                do {
+                    // 混淆邏輯：優先產生結尾數字相同的錯誤答案 (例如 24 vs 14)
+                    if (Math.random() > 0.5) {
+                        let offset = (Math.floor(Math.random() * 2) === 0 ? 10 : -10);
+                        fake = this.currentProblem.val + offset;
+                    } else {
+                        let offset = Math.floor(Math.random() * 10) - 5; 
+                        if (offset === 0) offset = 1;
+                        fake = this.currentProblem.val + offset;
+                    }
+
+                    // 邊界檢查
+                    if (fake <= 0) fake = Math.floor(Math.random()*80) + 1;
+                    
+                    safety++;
+                } while(
+                    (fake === this.currentProblem.val || this.balloons.some(b => b.number === fake)) && safety < 50
+                );
                 
-                this.balloons.push(new Balloon(numbers[i].val, numbers[i].isCorrect, centerX, balloonRadius));
+                this.balloons.push(new Balloon(fake, false, lanes[i]));
             }
         }
 
-        handleClick(clientX, clientY) {
+        handleInput(e) {
             if (this.state !== 'playing') return;
+            e.preventDefault();
 
-            // 修正座標 (如果 Canvas 有偏移)
+            let clientX, clientY;
+            if(e.touches) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+
             const rect = canvas.getBoundingClientRect();
-            const clickX = clientX - rect.left;
-            const clickY = clientY - rect.top;
+            const x = clientX - rect.left;
+            const y = clientY - rect.top;
 
-            // 檢查點擊 (由上層往下層檢查)
-            // 雖然現在不重疊了，但保持這個邏輯比較好
-            for (let i = this.balloons.length - 1; i >= 0; i--) {
-                const b = this.balloons[i];
+            for (let b of this.balloons) {
                 if (b.popped) continue;
-
-                const dist = Math.sqrt((clickX - b.x) ** 2 + (clickY - b.y) ** 2);
-                
-                // 增加一點點判定範圍 (Radius * 1.2) 讓手機比較好點
-                if (dist < b.radius * 1.2) {
+                // 寬鬆判定範圍
+                const dist = Math.sqrt((x - b.x)**2 + (y - b.y)**2);
+                if (dist < b.radius * 1.3) {
                     this.popBalloon(b);
-                    return; // 一次只點一顆
+                    break; 
                 }
             }
         }
 
         popBalloon(b) {
             b.popped = true;
-            this.createExplosion(b.x, b.y, b.color);
+            this.spawnExplosion(b.x, b.y, b.color);
 
             if (b.isCorrect) {
                 this.score++;
-                // 答對播放一個清脆音效邏輯（這裡僅視覺）
-                setTimeout(() => this.nextQuestion(), 200);
+                // 視覺回饋：閃光
+                const flash = document.createElement('div');
+                flash.style.position = 'absolute';
+                flash.style.top = 0; flash.style.left = 0;
+                flash.style.width = '100%'; flash.style.height = '100%';
+                flash.style.background = 'rgba(255,255,255,0.3)';
+                flash.style.pointerEvents = 'none';
+                flash.className = 'flash';
+                document.body.appendChild(flash);
+                setTimeout(() => flash.remove(), 200);
+
+                // **極速模式：沒有延遲，直接下一題**
+                this.nextQuestion();
             } else {
-                this.handleError();
+                this.handleMistake();
             }
         }
 
-        handleError() {
+        handleMistake() {
             this.mistakes++;
-            const key = this.currentProblem.str;
-            this.errorLog[key] = (this.errorLog[key] || 0) + 1;
-
-            // 炸畫面
+            // 錯誤懲罰：震動 + 畫面變紅 + 稍微延遲 (模擬思考卡頓)
             document.body.classList.add('shake');
-            document.body.style.backgroundColor = "#ff9999"; 
+            document.body.style.backgroundColor = "#500"; 
+            
+            // 錯誤時不要馬上換題，讓玩家知道這題答錯了，必須重新看
+            // 但在比賽模擬中，通常答錯就過去了，這裡我們選擇「懲罰時間」
+            // 氣球繼續飛，玩家得找剩下的氣球或是等下一波
             
             setTimeout(() => {
                 document.body.classList.remove('shake');
-                document.body.style.backgroundColor = ""; 
+                document.body.style.background = ""; // 復原背景
+                // 答錯後強制刷新題目 (避免玩家一直點同一個錯的)
+                this.nextQuestion(); 
             }, 400);
-
-            // 錯誤也換題，避免卡死
-            setTimeout(() => this.nextQuestion(), 500);
         }
 
-        createExplosion(x, y, color) {
-            for (let i = 0; i < 25; i++) {
+        spawnExplosion(x, y, color) {
+            for(let i=0; i<15; i++) {
                 this.particles.push(new Particle(x, y, color));
             }
         }
 
-        loop(timestamp) {
-            if (this.state !== 'playing') return;
-
-            const dt = (timestamp - this.lastTime) / 1000;
-            this.lastTime = timestamp;
-
-            if (dt < 1) { 
-                this.totalTime -= dt;
-                this.questionTimer -= dt;
-            }
-
-            // 單題超時
-            if (this.questionTimer <= 0) {
-                // 在題目中間產生一個爆炸提示
-                const rect = this.uiQuestion.getBoundingClientRect();
-                this.createExplosion(rect.left + rect.width/2, rect.top + rect.height/2, "red");
-                this.handleError(); 
-            }
-
-            // 遊戲結束
-            if (this.totalTime <= 0) {
-                this.endGame();
-                return;
-            }
-
-            // UI 更新
-            this.uiTime.textContent = Math.ceil(this.totalTime);
-            this.uiScore.textContent = this.score;
-            this.timerBar.style.width = `${Math.max(0, (this.questionTimer / QUESTION_TIME) * 100)}%`;
-            this.timerBar.style.backgroundColor = this.questionTimer < 2 ? "red" : "#FF6B6B";
-
-            // 繪圖
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // 氣球邏輯
-            let activeBalloons = false;
-            this.balloons.forEach(b => {
-                if (!b.popped) {
-                     b.update();
-                     // 如果氣球飄出去了，讓它從下面回來 (無限循環直到該題結束)
-                     if (b.y + b.radius < -50) {
-                         b.y = canvas.height + b.radius;
-                     }
-                     b.draw(ctx);
-                     activeBalloons = true;
-                }
-            });
-
-            // 粒子邏輯
-            for (let i = this.particles.length - 1; i >= 0; i--) {
-                const p = this.particles[i];
-                p.update();
-                p.draw(ctx);
-                if (p.life <= 0) this.particles.splice(i, 1);
-            }
-
-            requestAnimationFrame((t) => this.loop(t));
-        }
-
-        endGame() {
+        finishGame(isSuccess) {
             this.state = 'end';
             this.uiQuestion.style.display = 'none';
             this.endScreen.classList.remove('hidden');
             
-            document.getElementById('final-score').textContent = this.score;
-            document.getElementById('final-mistakes').textContent = this.mistakes;
+            const elapsed = (Date.now() - this.startTime) / 1000;
+            const finalTimeStr = elapsed.toFixed(1);
 
-            const listContainer = document.getElementById('error-list-container');
-            listContainer.innerHTML = '';
-            
-            const sortedErrors = Object.entries(this.errorLog).sort((a, b) => b[1] - a[1]);
+            document.getElementById('final-score').innerText = this.score;
+            document.getElementById('final-time').innerText = finalTimeStr;
+            document.getElementById('final-mistakes').innerText = this.mistakes;
 
-            if (sortedErrors.length === 0 && this.mistakes === 0) {
-                listContainer.innerHTML = '<div style="color:green;">💯 完美！完全沒有錯誤！</div>';
-            } else if (sortedErrors.length === 0) {
-                 listContainer.innerHTML = '<div>沒有特定組合錯誤 (皆為超時)。</div>';
+            const title = document.getElementById('end-title');
+            const reason = document.getElementById('end-reason');
+            const feedback = document.getElementById('feedback-msg');
+
+            if (isSuccess) {
+                title.innerText = "🏆 挑戰成功！ 🏆";
+                title.style.color = "#00ff00";
+                reason.innerText = `你在 ${finalTimeStr} 秒內完成了 50 題！`;
+                reason.style.color = "white";
+                
+                if (elapsed <= 100) {
+                    feedback.innerText = "評語：神級速度！這根本是反射神經！";
+                } else if (elapsed <= 120) {
+                    feedback.innerText = "評語：非常優秀！比賽時保持這個節奏就穩了。";
+                } else {
+                    feedback.innerText = "評語：壓線過關！要再加快一點點比較保險喔。";
+                }
             } else {
-                sortedErrors.slice(0, 5).forEach(item => { 
-                    const div = document.createElement('div');
-                    div.className = 'error-item';
-                    div.innerHTML = `${item[0]} <span style="float:right; color:#888;">錯誤 ${item[1]} 次</span>`;
-                    listContainer.appendChild(div);
-                });
+                title.innerText = "挑戰失敗";
+                title.style.color = "#ff4757";
+                reason.innerText = "時間耗盡，未達 50 題。";
+                reason.style.color = "#ccc";
+                feedback.innerText = "評語：不要灰心，加快判斷速度，減少猶豫時間！";
             }
+        }
+
+        loop() {
+            if (this.state !== 'playing') return;
+
+            const now = Date.now();
+            const elapsed = (now - this.startTime) / 1000;
+            const remaining = Math.max(0, TIME_LIMIT - elapsed);
+
+            // 更新 UI
+            this.uiTime.innerText = remaining.toFixed(1);
+            this.uiScore.innerText = this.score;
+            this.uiMistake.innerText = this.mistakes;
+            
+            // 進度條更新
+            const pct = (this.score / TARGET_SCORE) * 100;
+            this.barFill.style.width = `${pct}%`;
+
+            // 下方時間條
+            this.timerLine.style.width = `${(remaining / TIME_LIMIT) * 100}%`;
+            if (remaining < 30) this.timerLine.style.background = "red";
+
+            // 時間到判定
+            if (remaining <= 0) {
+                this.finishGame(false);
+                return;
+            }
+
+            // 繪圖與邏輯
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 氣球
+            this.balloons.forEach(b => {
+                b.update();
+                // 循環重生 (讓畫面上隨時有東西)
+                if (b.y + b.radius < -50) {
+                    b.y = canvas.height + b.radius + Math.random() * 100;
+                    b.x = b.x; // 保持賽道
+                    // 如果氣球飛出去了還沒點，視為錯過，可以選擇懲罰或單純重置
+                    // 這裡為了流暢度，重置位置就好，不扣分，因為玩家已經浪費時間了
+                }
+                b.draw(ctx);
+            });
+
+            // 粒子
+            for (let i = this.particles.length - 1; i >= 0; i--) {
+                this.particles[i].update();
+                this.particles[i].draw(ctx);
+                if (this.particles[i].life <= 0) this.particles.splice(i, 1);
+            }
+
+            requestAnimationFrame(() => this.loop());
         }
     }
 
     const game = new Game();
-
 </script>
 </body>
 </html>
